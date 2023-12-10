@@ -1,5 +1,13 @@
 Content.makeFrontInterface(500, 300);
 
+/*
+TODO
+
+stereo modal extraction
+
+
+*/
+
 // Instantiate Global Vars
 
 reg CURRENT_FILE;
@@ -12,16 +20,14 @@ reg BUFFER; // called "ooo" in LorisToolbox...
 
 var frequencies;
 var gains;
-var envelope;
 var filteredGains = [];
 var loudestModes = [];
+const NUM_MODES = 10;
 
 
 reg INPUT_FOLDER = FileSystem.getFolder(FileSystem.AudioFiles);
 reg OUTPUT_FOLDER = INPUT_FOLDER.getChildFile("Output");
 reg AUDIO_FILES = FileSystem.findFiles(INPUT_FOLDER, "*.wav", false); 
-
-const var FloatingTile1 = Content.getComponent("FloatingTile1");
 
 // Build Worker
 
@@ -72,9 +78,9 @@ function analyzeModes(file)
 	worker.setProgress(0.05);
 		
 	original = file.loadAsAudioFile();
-	var isMultichannel = isDefined(original[0].length);	
+	var isMultiChannel = isDefined(original[0].length);	
 	
-	if (isMultichannel)	
+	if (isMultiChannel)	
 	{
 		ROOT_FREQ = original[0].detectPitch(SAMPLERATE, original[0].length * 0.2, original[0].length * 0.6);
 	}
@@ -83,41 +89,72 @@ function analyzeModes(file)
 	
 	lorisManager.analyse(file, ROOT_FREQ);	
 	
-	/* these are confusing */
+	// Create Snapshots
 	frequencies = lorisManager.createSnapshot(file, "frequency", 0.5);	
 	gains = lorisManager.createSnapshot(file, "gain", 0.5);
 	
-	// filter by loudest
-	
-	for (i=0; i<gains[0].length; i++)
+	var gains_l = gains[0];
+	var frequencies_l = frequencies[0];
+
+	if (isMultiChannel)
 	{
-		filteredGains.push(gains[0][i]);
-	}
-	
-	//filteredGains = gains[0];
-	filteredGains.sort();
-	filteredGains.reverse();
-	
-	for (i=0; i<10; i++) // get 10 loudest modes
-	{
-		var idx = gains[0].indexOf(filteredGains[i], 0, 0);
-		loudestModes.pushIfNotAlreadyThere(frequencies[0][idx]);
-		
+		var gains_r = gains[1];	
+		var frequencies_r = frequencies[1];
+		var filteredGains_r = [];		
 	}
 
-	var JSONpath = OUTPUT_FOLDER.getChildFile("modes.JSON").toString(0);
-	Engine.dumpAsJSON(loudestModes, JSONpath);
+	// Organize Gains
 	
-	//for (i)
+	var filteredGains_l = [];
 	
-	
-	/*
-	for (i=0; i < gains.length; i++)
+	for (i=0; i < gains_l.length; i++)
 	{
-		
+		filteredGains_l.push(gains_l[i]);
 	}
-	*/
 	
+	filteredGains_l.sort();
+	filteredGains_l.reverse();
+	
+	if (isMultiChannel)
+	{
+		for (i=0; i < gains_r.length; i++)
+		{
+			filteredGains_r.push(gains_r[i]);
+		}
+		
+		filteredGains_r.sort();
+		filteredGains_r.reverse();
+	}
+	
+	// Isolate N loudest Modes
+	
+	var loudestModes_l = [];
+	var loudestModes_r = [];
+	
+	for (i=0; i<NUM_MODES; i++) 
+	{
+		var idx = gains_l.indexOf(filteredGains_l[i], 0, 0);
+		loudestModes_l.pushIfNotAlreadyThere(frequencies_l[idx]);			
+	}
+	
+	if (isMultiChannel)
+	{
+		for (i=0; i<NUM_MODES; i++) 
+		{
+			var idx = gains_r.indexOf(filteredGains_r[i], 0, 0);
+			loudestModes_r.pushIfNotAlreadyThere(frequencies_r[idx]);			
+		}
+	}
+
+
+	var JSONpath = OUTPUT_FOLDER.getChildFile("modes_l.JSON").toString(0);
+	Engine.dumpAsJSON(loudestModes_l, JSONpath);	
+	
+	if (isMultiChannel)
+	{
+		JSONpath = OUTPUT_FOLDER.getChildFile("modes_r.JSON").toString(0);
+		Engine.dumpAsJSON(loudestModes_r, JSONpath);	
+	}
 	
 	worker.setProgress(1.0);
 	PENDING = false;
@@ -149,9 +186,9 @@ function extractPartials()
 	worker.setProgress(0.05);
 		
 	original = CURRENT_FILE.loadAsAudioFile();
-	var isMultichannel = isDefined(original[0].length);	
+	var isMultiChannel = isDefined(original[0].length);	
 	
-	if (isMultichannel)	
+	if (isMultiChannel)	
 	{
 		ROOT_FREQ = original[0].detectPitch(SAMPLERATE, original[0].length * 0.2, original[0].length * 0.6);
 		residue = [];
@@ -159,7 +196,7 @@ function extractPartials()
 	else
 		ROOT_FREQ = original.detectPitch(SAMPLERATE, original.length * 0.2, original.length * 0.6);
 		
-	Console.print("Multichannel: " + isMultichannel + ", Root: " + ROOT_FREQ);
+	Console.print("Multichannel: " + isMultiChannel + ", Root: " + ROOT_FREQ);
 	
 	lorisManager.analyse(CURRENT_FILE, ROOT_FREQ);	
 	
@@ -175,7 +212,7 @@ function extractPartials()
 		return;
 	}
 	
-	if (isMultichannel)
+	if (isMultiChannel)
 	{
 		for (i=0; i<original.length; i++)
 		{			

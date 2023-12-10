@@ -1,12 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <ContentProperties DeviceType="Desktop">
-  <Component type="ScriptButton" id="btn_extract" x="20.0" y="190.0" width="120"
-             height="80" text="Create Residues" isMomentary="1"/>
-  <Component type="ScriptButton" id="btn_modes" x="20.0" y="50.0" width="120"
-             height="80" text="Calculate Modes" isMomentary="1"/>
-  <Component type="ScriptFloatingTile" id="FloatingTile1" x="180.0" y="30.0"
-             width="250" height="130" ContentType="AHDSRGraph" bgColour="0"
-             itemColour="452984831" itemColour2="2164260863" Data="{&#10;  &quot;ProcessorId&quot;: &quot;&quot;,&#10;  &quot;Index&quot;: -1,&#10;  &quot;FollowWorkspace&quot;: false&#10;}"
-             textColour="0"/>
+  <Component type="ScriptButton" id="btn_extract" x="20.0" y="190.0" width="120.0"
+             height="80.0" text="Create Residues" isMomentary="1"/>
+  <Component type="ScriptButton" id="btn_modes" x="20.0" y="50.0" width="120.0"
+             height="80.0" text="Calculate Modes" isMomentary="1"/>
 </ContentProperties>
