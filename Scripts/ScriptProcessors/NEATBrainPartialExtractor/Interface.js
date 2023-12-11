@@ -1,10 +1,15 @@
 Content.makeFrontInterface(500, 300);
 
+include("MathFunctions.js");
+
 /*
+
 TODO
 
-stereo modal extraction
-
+use ratios instead of raw frequency bins
+sort frequency bins before writing to JSON
+setup gains more accurately
+learn envelope stuff?
 
 */
 
@@ -19,6 +24,7 @@ reg BUFFER; // called "ooo" in LorisToolbox...
 // Analysis Variables
 
 var frequencies;
+var ratios;
 var gains;
 var filteredGains = [];
 var loudestModes = [];
@@ -90,6 +96,7 @@ function analyzeModes(file)
 	lorisManager.analyse(file, ROOT_FREQ);	
 	
 	// Create Snapshots
+	
 	frequencies = lorisManager.createSnapshot(file, "frequency", 0.5);	
 	gains = lorisManager.createSnapshot(file, "gain", 0.5);
 	
@@ -145,19 +152,57 @@ function analyzeModes(file)
 			loudestModes_r.pushIfNotAlreadyThere(frequencies_r[idx]);			
 		}
 	}
-
-
-	var JSONpath = OUTPUT_FOLDER.getChildFile("modes_l.JSON").toString(0);
-	Engine.dumpAsJSON(loudestModes_l, JSONpath);	
+	
+	// Calculate Ratios
+	
+	var ratios_l = [];
+	var ratios_r = [];
+	
+	ratios_l.push(1.000000000000000); // Push root to list
+	
+	for (i=1; i<NUM_MODES; i++)
+	{
+		var ratio = calculateRatio(loudestModes_l[0], loudestModes_l[i]);
+		ratios_l.push(ratio);
+	}
 	
 	if (isMultiChannel)
 	{
-		JSONpath = OUTPUT_FOLDER.getChildFile("modes_r.JSON").toString(0);
-		Engine.dumpAsJSON(loudestModes_r, JSONpath);	
+		ratios_r.push(1.000000000000000); // Push root to list		
+			
+		for (i=1; i<NUM_MODES; i++)
+		{
+			var ratio = calculateRatio(loudestModes_r[0], loudestModes_r[i]);
+			ratios_r.push(ratio);
+		}
 	}
+
+	// Write to JSON
+	
+	var JSONdata = {
+		
+	"frequencies_l" : loudestModes_l,
+	"ratios_l" : ratios_l,	
+	};
+	
+	//var JSONdata = [loudestModes_l, ratios_l];
+	
+	if (isMultiChannel)
+		JSONdata = {				
+			"frequencies_l" : loudestModes_l,
+			"ratios_l" : ratios_l,	
+			"frequencies_r" : loudestModes_r,
+			"ratios_r" : ratios_r
+			};
+		//JSONdata = [loudestModes_l, loudestModes_r, ratios_l, ratios_r];
+
+	var JSONpath = OUTPUT_FOLDER.getChildFile("modal_analysis.JSON").toString(0);
+	Engine.dumpAsJSON(JSONdata, JSONpath);		
 	
 	worker.setProgress(1.0);
 	PENDING = false;
+	
+	Console.print("Finished writing modal_analysis.JSON");
 }
 
 function extractPartials()
@@ -278,6 +323,10 @@ inline function onbtn_extractControl(component, value)
 };
 
 Content.getComponent("btn_extract").setControlCallback(onbtn_extractControl);
+
+
+
+
 function onNoteOn()
 {
 	
