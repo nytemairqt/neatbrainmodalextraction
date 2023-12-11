@@ -6,7 +6,6 @@ include("MathFunctions.js");
 
 TODO
 
-use ratios instead of raw frequency bins
 sort frequency bins before writing to JSON
 setup gains more accurately
 learn envelope stuff?
@@ -153,6 +152,11 @@ function analyzeModes(file)
 		}
 	}
 	
+	// Sort Frequency Bins
+	
+	loudestModes_l.sort();
+	loudestModes_r.sort();
+	
 	// Calculate Ratios
 	
 	var ratios_l = [];
@@ -185,8 +189,6 @@ function analyzeModes(file)
 	"ratios_l" : ratios_l,	
 	};
 	
-	//var JSONdata = [loudestModes_l, ratios_l];
-	
 	if (isMultiChannel)
 		JSONdata = {				
 			"frequencies_l" : loudestModes_l,
@@ -194,7 +196,6 @@ function analyzeModes(file)
 			"frequencies_r" : loudestModes_r,
 			"ratios_r" : ratios_r
 			};
-		//JSONdata = [loudestModes_l, loudestModes_r, ratios_l, ratios_r];
 
 	var JSONpath = OUTPUT_FOLDER.getChildFile("modal_analysis.JSON").toString(0);
 	Engine.dumpAsJSON(JSONdata, JSONpath);		
