@@ -281,7 +281,7 @@ function extractPartials()
 	
 }
 
-function extractEnvelopes()
+function extractEnvelope()
 {		
 	// Safety Check
 	
@@ -317,7 +317,7 @@ function extractEnvelopes()
 		
 	Console.print("Multichannel: " + isMultiChannel + ", Root: " + ROOT_FREQ);
 	
-	//lorisManager.analyse(CURRENT_FILE, ROOT_FREQ);	
+	lorisManager.analyse(CURRENT_FILE, ROOT_FREQ);	
 	
 	worker.setProgress(0.4);
 	
@@ -332,16 +332,26 @@ function extractEnvelopes()
 	var env = lorisManager.createEnvelopes(CURRENT_FILE, "frequency", 0);
 	Console.print(env);
 	
-	//Console.print("Saving Audio...");
-	
-	//saveAudio(CURRENT_FILE, original);
-	
 	worker.setProgress(1.0);
 	PENDING = false;
 	
 	Console.print("Done!");
 	
 	return env;		
+}
+
+function filterEnvelope(buffer)
+{
+	var list = [];
+	
+	Console.print("length " + buffer.length);
+
+	
+	for (s in buffer)
+	{
+		list.push(s);
+	}
+	
 }
 
 
@@ -398,10 +408,11 @@ inline function onbtn_extractEnvelopeControl(component, value)
 		AUDIO_FILES = FileSystem.findFiles(INPUT_FOLDER, "*.wav", false); 
 		CURRENT_FILE = AUDIO_FILES[0];
 		
-		envelope = extractEnvelopes();
+		envelope = extractEnvelope();
 		
 		envBuffer = envelope[0];
-		Console.print(envBuffer.getRMSLevel());
+
+		filterEnvelope(envBuffer);
 		
 	}
 };
