@@ -330,30 +330,32 @@ function extractEnvelope()
 	}
 	
 	var env = lorisManager.createEnvelopes(CURRENT_FILE, "frequency", 0);
-	Console.print(env);
 	
-	worker.setProgress(1.0);
-	PENDING = false;
-	
-	Console.print("Done!");
-	
-	return env;		
-}
-
-function filterEnvelope(buffer)
-{
 	var list = [];
-	
-	Console.print("length " + buffer.length);
 
-	
-	for (s in buffer)
+	var filterResolution = 18; // maybe tweak?
+	var ratio;
+		
+	/* Filter, Convert to Ratios and Push */
+	for (s in env[0])
 	{
-		list.push(s);
+		if (s > ROOT_FREQ - filterResolution && s < ROOT_FREQ + filterResolution)
+		{
+			ratio = s / ROOT_FREQ;
+			list.push(ratio);		
+		}			
 	}
 	
+	// Write to JSON
+	var jsonData = {"envelope" : list};	
+	var jsonPath = OUTPUT_FOLDER.getChildFile("envelope.JSON").toString(0);
+	Engine.dumpAsJSON(jsonData, jsonPath);
+	
+	// End Writer
+	worker.setProgress(1.0);
+	PENDING = false;	
+	Console.print("Finished writing Envelope.");
 }
-
 
 // Interface Objects
 
@@ -408,12 +410,7 @@ inline function onbtn_extractEnvelopeControl(component, value)
 		AUDIO_FILES = FileSystem.findFiles(INPUT_FOLDER, "*.wav", false); 
 		CURRENT_FILE = AUDIO_FILES[0];
 		
-		envelope = extractEnvelope();
-		
-		envBuffer = envelope[0];
-
-		filterEnvelope(envBuffer);
-		
+		extractEnvelope();		
 	}
 };
 
