@@ -281,6 +281,69 @@ function extractPartials()
 	
 }
 
+function extractEnvelopes()
+{		
+	// Safety Check
+	
+	PENDING = true;
+	
+	if(worker.shouldAbort())
+	{
+		worker.setProgress(0.0);
+		worker.setStatusMessage("Cancel");
+		PENDING = false;
+		return;
+	}
+	
+	// Insantiate Local Vars
+
+	var original;
+	
+	// Update Worker
+	
+	worker.setStatusMessage("Analysing...");
+	worker.setProgress(0.05);
+		
+	original = CURRENT_FILE.loadAsAudioFile();
+	var isMultiChannel = isDefined(original[0].length);	
+	
+	if (isMultiChannel)	
+	{
+		ROOT_FREQ = original[0].detectPitch(SAMPLERATE, original[0].length * 0.2, original[0].length * 0.6);
+		residue = [];
+	}
+	else
+		ROOT_FREQ = original.detectPitch(SAMPLERATE, original.length * 0.2, original.length * 0.6);
+		
+	Console.print("Multichannel: " + isMultiChannel + ", Root: " + ROOT_FREQ);
+	
+	//lorisManager.analyse(CURRENT_FILE, ROOT_FREQ);	
+	
+	worker.setProgress(0.4);
+	
+	if(worker.shouldAbort())
+	{
+		worker.setProgress(0.0);
+		worker.setStatusMessage("Cancel");
+		PENDING = false;
+		return;
+	}
+	
+	var env = lorisManager.createEnvelopes(CURRENT_FILE, "frequency", 0);
+	Console.print(env);
+	
+	//Console.print("Saving Audio...");
+	
+	//saveAudio(CURRENT_FILE, original);
+	
+	worker.setProgress(1.0);
+	PENDING = false;
+	
+	Console.print("Done!");
+	
+	return env;		
+}
+
 
 // Interface Objects
 
@@ -325,7 +388,25 @@ inline function onbtn_extractControl(component, value)
 
 Content.getComponent("btn_extract").setControlCallback(onbtn_extractControl);
 
+var envelope;
+var envBuffer;
 
+inline function onbtn_extractEnvelopeControl(component, value)
+{
+	if (value)
+	{
+		AUDIO_FILES = FileSystem.findFiles(INPUT_FOLDER, "*.wav", false); 
+		CURRENT_FILE = AUDIO_FILES[0];
+		
+		envelope = extractEnvelopes();
+		
+		envBuffer = envelope[0];
+		Console.print(envBuffer.getRMSLevel());
+		
+	}
+};
+
+Content.getComponent("btn_extractEnvelope").setControlCallback(onbtn_extractEnvelopeControl);
 
 
 function onNoteOn()

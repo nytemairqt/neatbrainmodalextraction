@@ -11,6 +11,7 @@
           <Content>
             <Control type="ScriptButton" id="btn_extract" value="0.0"/>
             <Control type="ScriptButton" id="btn_modes" value="0.0"/>
+            <Control type="ScriptButton" id="btn_extractEnvelope" value="0.0"/>
           </Content>
           <UIData Source="NEATBrain Partial ExtractorUIData"/>
         </Processor>
